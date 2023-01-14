@@ -1,0 +1,526 @@
+openapi: 3.0.3
+info:
+ title: Phonebook OpenAPI специфікація 
+ version: 0.0.1
+servers:
+ - url: http://localhost:3000/api
+   description: API base URL 
+tags:
+  - name: User
+  - name: Contacts
+   
+paths:
+  /users/signup:
+    post:
+      tags: 
+         - User
+      summary: Create a new user
+      description: Create a new user
+      operationId: addUser
+      requestBody:
+        content:
+          application/json: 
+            schema:            
+              type: object
+              properties: 
+                email:
+                 type: string
+                 description: E-mail address.
+                 example: pahojedi@jollyfree.com
+                password:
+                 type: string
+                 example: "examplepwd12345"
+      responses:
+       '201':
+         description: Success
+         content:
+              application/json:
+                schema:
+                  type: object
+                  properties: 
+                    email:
+                      type: string
+                      description: E-mail address.
+                      example: pahojedi@jollyfree.com 
+                    subscription:
+                        type: string   
+       '400':
+          description: Error from Joi or another validation library  
+       '409':
+          description: Email in use
+       '500':
+          description: Server error.
+  /users/login:
+    post:
+      tags:
+        - User
+        
+      summary: Login user 
+      description: Login user 
+      operationId: loginUser
+      requestBody:
+        content:
+          application/json: 
+            schema:            
+              type: object
+              properties: 
+                email:
+                 type: string
+                 description: E-mail address.
+                 example: pahojedi@jollyfree.com
+                password:
+                 type: string
+                 example: "examplepwd12345"
+      responses:
+       '200':
+         description: User is logged in.
+         content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    token:
+                     type: string                    
+                    email:
+                      type: string
+                      description: E-mail address.
+                      example: pahojedi@jollyfree.com 
+                    subscription:
+                        type: string 
+       '400':
+          description: Error from Joi or another validation library  
+       '401':
+          description: Email is wrong or not verify, or password is wrong
+       '500':
+          description: Server error. 
+  /users/current:
+    get:
+      tags:
+        - User
+      summary: Get information about the current user
+      operationId: currentUser
+      parameters: 
+        - name: Authorization
+          in: header
+          required: true
+          description: The token issued to the current user.
+          schema:
+            type: string
+      responses:
+        '200':
+           description: Information found.
+           content:
+              application/json:
+                schema:
+                  type: object
+                  properties: 
+                    email:
+                      type: string
+                      description: E-mail address.
+                      example: pahojedi@jollyfree.com 
+                    subscription:
+                        type: string
+        '401':
+          description: Missing header with authorization token.        
+      
+
+  /users/logout:
+    get:
+      tags:
+        - User
+      summary: Logs out current logged in user session
+      operationId: logoutUser
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: The token issued to the current user.
+          schema:
+            type: string 
+     
+      responses:
+        '204':
+           description: No Content
+        '401':
+          description: Not authorized 
+  /users/avatars:
+    patch:
+      tags: 
+        - User
+      summary: Update avatars
+      operationId: updateAvatars
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: The token issued to the current user.
+          schema:
+            type: string 
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: string
+              format: binary 
+      responses:
+        '200':
+           description: Success
+           content:
+              application/json:
+                schema: 
+                  type: object
+                  properties:
+                    avatarURL:
+                     type: string 
+                     description: URL avatars
+                     example: public\avatars\63c2a7207d063f0f7ad0e15c_myAvatar.jpg
+
+        '401':
+          description: Not authorized  
+        "default":
+          description: Everything is non-standard
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'            
+      
+              
+
+  /contacts:
+    get:
+      tags:
+        - Contacts
+      summary: Get all user contacts 
+      operationId: getAllContact
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: The token issued to the current user.
+          schema:
+            type: string   
+      responses:
+        '200':
+           description: Contacts found.
+           content:
+              application/json:
+                schema:                  
+                    $ref: '#/components/schemas/Contacts'
+        '401':
+          description: Missing header with authorization token.
+        "404":
+         description: There is no such user collection.
+        "default":
+          description: Everything is non-standard
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'
+    post:
+      tags:
+       - Contacts
+      summary: Create a new contact
+      operationId: cresteContact
+      parameters:
+       - name: Authorization
+         in: header
+         required: true
+         description: The token issued to the current user.
+         schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Contact'
+      responses:
+        '201':
+           description: The contact was successfully created.
+           content:
+              application/json:
+                schema:
+                    $ref: '#/components/schemas/Contact'
+        
+        "400":
+         description: Error creating contact
+        "401":
+         description:  Missing header with authorization token.
+        "default":
+          description: Everything is non-standard
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'     
+             
+        
+      
+  
+  /contacts/{_id}:
+    get:
+      tags:
+       - Contacts
+      summary: Get contact by id
+      operationId: getContactById
+      parameters:
+        - name: _id
+          in: path
+          required: true
+          description: _id contact
+          schema:
+            type: string
+            example: 639cba04e4581690a36dc5b9
+       
+        - name: Authorization
+          in: header
+          required: true
+          description: The token issued to the current user.
+          schema:
+            type: string    
+            
+      responses:
+        '200':
+           description: Contact found.
+           content:
+              application/json:
+                schema:                 
+                    $ref: '#/components/schemas/Contact'
+        
+        "404":
+         description: Not found
+        "default":
+          description: Everything is non-standard
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error' 
+ 
+      
+    delete:
+      tags:
+       - Contacts
+      summary: Delete contact by id
+      operationId: deleteContactById
+      parameters:
+        - name: _id
+          in: path
+          required: true
+          description: _id contact
+          schema:
+            type: string
+            example: 639cba04e4581690a36dc5b9
+     
+        - name: Authorization
+          in: header
+          required: true
+          description: The token issued to the current user.
+          schema:
+            type: string      
+      responses:
+        '200':
+           description: The contact was successfully deleted.
+        "401":
+          description: Missing header with authorization token.
+        "404":  
+           description: There is no such user collection.
+        "default":
+          description: Everything is non-standard
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'  
+    put:
+      tags:
+       - Contacts
+      summary: Update  contact 
+      operationId: UpdateContactById
+      parameters:
+        - name: _id
+          in: path
+          required: true
+          description: _id contact
+          schema:
+            type: string
+            example: 639cba04e4581690a36dc5b9
+     
+        - name: Authorization
+          in: header
+          required: true
+          description: The token issued to the current user.
+          schema:
+            type: string
+      requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact' 
+      responses:
+        '200':
+           description: The contact was successfully updated.
+           content:
+              application/json:
+                schema:
+                    $ref: '#/components/schemas/Contact'
+        
+        "400":
+         description: Missing fields
+        "404":
+         description:  Not found.
+        "default":
+          description: Everything is non-standard
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'                   
+  /contacts/{_id}/favorite:
+    patch:
+       tags:
+       - Contacts
+       summary: Update status  contact 
+       operationId:  updateStatusContact
+       parameters:
+        - name: _id
+          in: path
+          required: true
+          description: _id contact
+          schema:
+            type: string
+            example: 639cba04e4581690a36dc5b9
+     
+        - name: Authorization
+          in: header
+          required: true
+          description: The token issued to the current user.
+          schema:
+            type: string 
+       requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                 favorite:
+                     type: boolean
+       responses:
+        '200':
+           description: The contact was successfully updated.
+           content:
+              application/json:
+                schema:
+                  type: object
+                  properties:                    
+                    favorite:
+                     type: boolean
+                    id:
+                      type: string
+                      description: Backend-generated unique identifier.
+                    name:
+                      type: string
+                      description: Contact name.
+                      example:  "Allen Raymond"
+                    email:
+                      type: string
+                      description: E-mail address.
+                      example: videfosota@rungel.net
+                    phone:
+                      type: string
+                      description: Phone number of the contact.
+                      example: "294-840-6685"  
+        
+        "400":
+         description: Missing field favorite
+        "404":
+         description:  Not found.
+        "default":
+          description: Everything is non-standard
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'              
+
+    
+
+                   
+
+
+
+components:
+ schemas:
+   User:
+      type: object
+      required:
+        - password
+        - email
+      
+      
+      properties: 
+        _id:
+          type: string
+          description: Backend-generated unique identifier.
+          example: 639b1ce26d651ae40a4df417
+
+        email:
+         type: string
+         description: E-mail address.
+         example: pahojedi@jollyfree.com
+        password:
+         type: string
+         example: "examplepwd12345"
+        subscription:
+          type: string 
+          enum:
+            - starter
+            - pro
+            - business
+          default: starter 
+        avatarURL:
+          type: string  
+        verify: 
+          type: boolean
+          default: false 
+        token:
+          type: string   
+         
+         
+   Contact:
+      
+      required:
+        - name
+        - email
+      properties:
+        id:
+         type: string
+         description: Backend-generated unique identifier.
+        name:
+         type: string
+         description: Contact name.
+         example:  "Allen Raymond"
+        email:
+         type: string
+         description: E-mail address.
+         example: videfosota@rungel.net
+        phone:
+         type: string
+         description: Phone number of the contact.
+         example: "294-840-6685"  
+        favorite:
+         type: boolean
+         default: false
+        
+         
+   Contacts:
+      type: array
+      items:
+        $ref: '#/components/schemas/Contact'
+   Error:
+      type: object
+      required:
+        - code
+        - massager
+      properties:
+       code:
+        type: integer
+       massager:
+        type: string
